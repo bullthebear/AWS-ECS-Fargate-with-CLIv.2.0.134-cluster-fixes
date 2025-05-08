@@ -6,7 +6,7 @@ const vpc = new awsx.ec2.Vpc("cobber-vpc", {});
 // 2. Create an ECS cluster
 const cluster = new awsx.ecs.Cluster("cobber-cluster", { vpc });
 
-// 3. Create a Fargate service running nginx
+// 3. Create a Fargate service with nginx
 const service = new awsx.ecs.FargateService("nginx-service", {
     cluster,
     taskDefinitionArgs: {
@@ -22,7 +22,5 @@ const service = new awsx.ecs.FargateService("nginx-service", {
     desiredCount: 1,
 });
 
-// 4. Export the public URL safely
-export const url = service.listeners.apply(listeners =>
-    listeners && listeners.length > 0 ? listeners[0].endpoint.hostname : "pending..."
-);
+// ✅ 4. Access listener hostname directly — no apply needed
+export const url = service.listeners[0].endpoint.hostname;
