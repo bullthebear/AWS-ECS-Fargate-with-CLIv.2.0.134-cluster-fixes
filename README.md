@@ -23,3 +23,7 @@ const nginx = new awsx.ecs.FargateService("cobber-nginx", {
 
 // 4. Export the public URL
 export const url = nginx.loadBalancer.hostname;
+
+
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
