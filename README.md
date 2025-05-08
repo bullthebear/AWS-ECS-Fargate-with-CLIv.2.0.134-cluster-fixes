@@ -15,12 +15,12 @@ const service = new awsx.ecs.FargateService("nginx-service", {
                 image: "nginx",
                 cpu: 256,
                 memory: 512,
-                portMappings: [{ containerPort: 80 }], // <-- fixed this
+                portMappings: [{ containerPort: 80 }],
             },
         },
     },
     desiredCount: 1,
 });
 
-// 4. Export the public load balancer's URL
-export const url = service.loadBalancer.hostname; // <-- fixed this
+
+export const url = service.listeners[0].endpoint.hostname;
