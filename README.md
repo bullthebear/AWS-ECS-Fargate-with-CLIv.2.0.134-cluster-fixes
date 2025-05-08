@@ -1,12 +1,18 @@
 import * as awsx from "@pulumi/awsx";
 
-// 1. Create a VPC
+// 1. VPC
 const vpc = new awsx.ec2.Vpc("cobber-vpc", {});
 
-// 2. Create an ECS cluster
+// 2. ECS Cluster
 const cluster = new awsx.ecs.Cluster("cobber-cluster", { vpc });
 
-// 3. Create a Fargate service with nginx
+// 3. Application Load Balancer Listener
+const listener = new awsx.lb.ApplicationListener("nginx-listener", {
+    vpc,
+    port: 80,
+});
+
+// 4. Fargate Service (binds to listener)
 const service = new awsx.ecs.FargateService("nginx-service", {
     cluster,
     taskDefinitionArgs: {
@@ -15,12 +21,12 @@ const service = new awsx.ecs.FargateService("nginx-service", {
                 image: "nginx",
                 cpu: 256,
                 memory: 512,
-                portMappings: [{ containerPort: 80 }],
+                portMappings: [listener],
             },
         },
     },
     desiredCount: 1,
 });
 
-// ✅ 4. Access listener hostname directly — no apply needed
-export const url = service.listeners[0].endpoint.hostname;
+// ✅ 5. Export public ALB hostname
+export const url = listener.endpoint.hostname;
