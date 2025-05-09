@@ -1,4 +1,5 @@
 import * as awsx from "@pulumi/awsx";
+import * as pulumi from "@pulumi/pulumi";
 
 // 1. VPC
 const vpc = new awsx.ec2.Vpc("cobber-vpc", {});
@@ -7,26 +8,30 @@ const vpc = new awsx.ec2.Vpc("cobber-vpc", {});
 const cluster = new awsx.ecs.Cluster("cobber-cluster", { vpc });
 
 // 3. Application Load Balancer Listener
-const listener = new awsx.lb.ApplicationListener("nginx-listener", {
+const listener = new awsx.lb.ApplicationListener("cobber-listener", {
     vpc,
     port: 80,
 });
 
-// 4. Fargate Service (binds to listener)
-const service = new awsx.ecs.FargateService("nginx-service", {
+// 4. Cobber Fargate Service (replaces nginx)
+const cobberService = new awsx.ecs.FargateService("cobber-service", {
     cluster,
     taskDefinitionArgs: {
         containers: {
-            nginx: {
-                image: "nginx",
+            cobber: {
+                image: "registry.git.cenic.org/inf-p1/cobber:latest",
                 cpu: 256,
                 memory: 512,
                 portMappings: [listener],
+                repositoryCredentials: {
+                    // ⛳️ Replace the below with the actual secret ARN from Secrets Manager
+                    credentialsParameter: pulumi.interpolate`arn:aws:secretsmanager:us-west-2:<your-account-id>:secret:gitlab-cobber-registry-XXXX`,
+                },
             },
         },
     },
     desiredCount: 1,
 });
 
-// ✅ 5. Export public ALB hostname
-export const url = listener.endpoint.hostname;
+// 5. Export the load balancer URL
+export const cobberUrl = listener.endpoint.hostname;
