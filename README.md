@@ -1,1 +1,1 @@
-scp dpasupuletimfa@10.13.95.139:~/cobber-ecs.tar.gz ~
+scp cobber-ecs.tar.gz dpasupuleti@172.20.20.20:~
