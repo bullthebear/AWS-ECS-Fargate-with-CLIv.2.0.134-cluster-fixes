@@ -17,7 +17,13 @@ RUN npm run build
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 
-COPY --from=builder /app/dist .
+# Copy the built app
+COPY --from=builder /app/dist/ .
+
+# Copy the raw JSON config directly into the nginx root
 COPY --from=builder /app/public/appconfig.json ./appconfig.json
+
+# Ensure it actually exists
+RUN ls -l /usr/share/nginx/html
 
 CMD ["nginx", "-g", "daemon off;"]
