@@ -1,44 +1,20 @@
-import * as awsx from "@pulumi/awsx";
-import * as pulumi from "@pulumi/pulumi";
+# ---------- Stage 1: Build ----------
+FROM node:22-slim as builder
+ARG CI_COMMIT_TAG
+ARG CI_COMMIT_SHORT_SHA
 
-// 1. VPC
-const vpc = new awsx.ec2.Vpc("cobber-vpc", {});
+COPY package.json package-lock.json tsconfig.app.json tsconfig.node.json tsconfig.json vite.config.ts svelte.config.js index.html ./
+COPY src src/
+COPY public public/
 
-// 2. ECS Cluster
-const cluster = new awsx.ecs.Cluster("cobber-cluster", { vpc });
+RUN sed -i "s/COBBER_VERSION/${CI_COMMIT_TAG:-${CI_COMMIT_SHORT_SHA:-local}}/g" src/pages/Index.svelte
+RUN npm ci
+RUN npm run build
 
-// 3. Application Load Balancer Listener with health check
-const listener = new awsx.lb.ApplicationListener("cobber-listener", {
-    vpc,
-    port: 80,
-    targetGroup: {
-        port: 80,
-        healthCheck: {
-            path: "/index.html", // You can change this if needed
-            interval: 30,
-            timeout: 5,
-            healthyThreshold: 2,
-            unhealthyThreshold: 2,
-        },
-    },
-});
+# ---------- Stage 2: Serve ----------
+FROM nginx:alpine
 
-// 4. Cobber Fargate Service
-const cobberService = new awsx.ecs.FargateService("cobber-service", {
-    cluster,
-    assignPublicIp: true, 
-    taskDefinitionArgs: {
-        containers: {
-            cobber: {
-                image: "dundycenic/cobber-nginx:latest",
-                cpu: 256,
-                memory: 512,
-                portMappings: [listener],
-            },
-        },
-    },
-    desiredCount: 1,
-});
+COPY --from=builder /dist /usr/share/nginx/html
 
-// 5. Export the ALB hostname
-export const cobberUrl = listener.endpoint.hostname;
+
+CMD ["nginx", "-g", "daemon off;"]
