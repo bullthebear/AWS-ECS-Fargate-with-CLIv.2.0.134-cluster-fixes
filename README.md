@@ -1,1 +1,4 @@
-scp cobber-ecs.tar.gz dpasupuleti@172.20.20.20:~
+cd ~/cobber-ecs
+git init
+git add .
+git commit -m "Initial ECS Pulumi prototype"
