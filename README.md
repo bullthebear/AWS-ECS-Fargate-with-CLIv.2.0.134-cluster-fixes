@@ -1,4 +1,1 @@
-cd ~/cobber-ecs
-git init
-git add .
-git commit -m "Initial ECS Pulumi prototype"
+docker push dundycenic/cobber-nginx:latest
